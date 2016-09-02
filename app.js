@@ -4,35 +4,43 @@ var elasticsearch = require('elasticsearch');
 var readline = require('readline');
 var moment = require('moment');
 
-var walker  = walk.walkSync('/Users/jettrocoenradie/Pictures/export/2013', { followLinks: false });
+var options = {
+    listeners: {
+      names: function (root, nodeNamesArray) {
+        nodeNamesArray.sort(function (a, b) {
+          if (a > b) return 1;
+          if (a < b) return -1;
+          return 0;
+        });
+      }
+    , directories: function (root, dirStatsArray, next) {
+        // dirStatsArray is an array of `stat` objects with the additional attributes 
+        // * type
+        // * error
+        // * name
+        next();
+      }
+    , file: function (root, stat, next) {
+	console.log("Walk " + stat.name);
+	// Add this file to the list of files
+	if (strEndsWith(stat.name.toLowerCase(),".jpg")) {
+		extractData(root + '/' + stat.name, next);
+	}
+	next();
+      }
+    , errors: function (root, nodeStatsArray, next) {
+	console.log(nodeStatsArray);
+        next();
+      }
+    }
+    , followLinks: true
+  };
+
+var walker  = walk.walkSync('/home/friedreb/photo', options);
 
 var client = new elasticsearch.Client({
-	host: '192.168.1.10:9200',
+	host: 'localhost:9200',
 	log:'trace'
-});
-
-walker.on('file', function(root, stat, next) {
-	console.log("Walk " + stat.name);
-    // Add this file to the list of files
-    if (strEndsWith(stat.name.toLowerCase(),".jpg")) {
-	    extractData(root + '/' + stat.name, next);
-    }
-    next();
-});
-
-walker.on('end', function() {
-	var rl = readline.createInterface({
-		input: process.stdin,
-		output: process.stdout
-	});
-
-	rl.question("What do you think of node.js? ", function(answer) {
-		console.log("Thank you for your valuable feedback:", answer);
-  		rl.close();
-		flushItems();
-  		console.log("We are done!");
-	});
-    
 });
 
 function strEndsWith(str, suffix) {
@@ -81,7 +89,7 @@ function sendToElasticsearch(searchObj) {
 	console.log("Sending to elastic");
 	items.push({"index":{}});
 	items.push(searchObj);
-	if (items.length >= 100) {
+	if (items.length >= 1) {
 		flushItems();
 	}
 }
