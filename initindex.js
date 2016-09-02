@@ -13,7 +13,7 @@ function deleteIndex() {
 	}, function(err,response) {
 		console.log("Delete index!");
 		if (err) {
-			if (err.message === 'IndexMissingException[[myimages] missing]') {
+			if (err.message.indexOf('index_not_found_exception') !== -1) {
 				console.log('Index does not exist');
 				sendSettings();
 			} else {
