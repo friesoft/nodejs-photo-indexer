@@ -4,9 +4,10 @@
   "description": "Node js sample to index photo metadata using the exiftool",
   "main": "app.js",
   "dependencies": {
-    "exif2": "",
-    "walk": "",
-    "elasticsearch": ""
+    "elasticsearch": "",
+    "exif2": "0.0.1",
+    "moment": "^2.14.1",
+    "walk": "^2.3.9"
   },
   "author": "You",
   "license": "BSD",

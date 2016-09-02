@@ -2,6 +2,7 @@ var exif = require('exif2');
 var walk = require('walk');
 var elasticsearch = require('elasticsearch');
 var readline = require('readline');
+var moment = require('moment');
 
 var walker  = walk.walkSync('/Users/jettrocoenradie/Pictures/export/2013', { followLinks: false });
 
@@ -58,7 +59,17 @@ function extractData(file) {
 			searchObj.shutter = obj["shutter speed value"];
 			searchObj.compensation = obj["exposure compensation"];
 			searchObj.focalLength = obj["focal length"];
-			searchObj.createDate = obj["date time original"];
+			if (obj["date time original"] == null) {
+				//2016:04:20 18:48:35+02:00
+				var momentDate = moment(obj["file modification date time"], 'YYYY:MM:DD HH:mm:ss+ZZ');
+				console.log(momentDate);
+				searchObj.createDate = momentDate.format("YYYY:MM:DD HH:mm:ss");
+			} else {
+				var momentDate = moment(obj["date time original"], 'YYYY:MM:DD HH:mm:ss.ms');
+				console.log(momentDate);
+				searchObj.createDate = momentDate.format("YYYY:MM:DD HH:mm:ss");
+			}
+
 
 			sendToElasticsearch(searchObj);
 		}
