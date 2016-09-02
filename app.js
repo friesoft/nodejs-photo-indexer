@@ -59,6 +59,7 @@ function extractData(file) {
 			console.log(obj);
 			var searchObj = {};
 			searchObj.name = obj["file name"];
+			searchObj.directory = obj["directory"];
 			searchObj.camera = obj["camera model name"];
 			searchObj.lens = obj["lens"];
 			searchObj.iso = obj["iso"];
