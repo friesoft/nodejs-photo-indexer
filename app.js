@@ -1,42 +1,45 @@
 var exif = require('exif2');
-var walk = require('walk');
+var chokidar = require('chokidar');
 var elasticsearch = require('elasticsearch');
 var readline = require('readline');
 var moment = require('moment');
 
-var options = {
-    listeners: {
-      names: function (root, nodeNamesArray) {
-        nodeNamesArray.sort(function (a, b) {
-          if (a > b) return 1;
-          if (a < b) return -1;
-          return 0;
-        });
-      }
-    , directories: function (root, dirStatsArray, next) {
-        // dirStatsArray is an array of `stat` objects with the additional attributes 
-        // * type
-        // * error
-        // * name
-        next();
-      }
-    , file: function (root, stat, next) {
-	console.log("Walk " + stat.name);
-	// Add this file to the list of files
-	if (strEndsWith(stat.name.toLowerCase(),".jpg")) {
-		extractData(root + '/' + stat.name, next);
-	}
-	next();
-      }
-    , errors: function (root, nodeStatsArray, next) {
-	console.log(nodeStatsArray);
-        next();
-      }
-    }
-    , followLinks: true
-  };
 
-var walker  = walk.walkSync('/home/friedreb/photo', options);
+// Initialize watcher. 
+var watcher = chokidar.watch('/home/friedreb/photo', {
+  persistent: true,
+  ignoreInitial: true
+});
+ 
+// Something to use when events are received. 
+var log = console.log.bind(console);
+// Add event listeners. 
+watcher
+  .on('add', path => {
+	log(`File ${path} has been added`);
+	if (strEndsWith(path.toLowerCase(),".jpg")) {
+		extractData(path);
+	}
+     }
+   )
+  .on('change', path => log(`File ${path} has been changed`))
+  .on('unlink', path => log(`File ${path} has been removed`));
+ 
+// More possible events.
+watcher
+  .on('addDir', path => log(`Directory ${path} has been added`))
+  .on('unlinkDir', path => log(`Directory ${path} has been removed`))
+  .on('error', error => log(`Watcher error: ${error}`))
+  .on('ready', () => log('Initial scan complete. Ready for changes'))
+  .on('raw', (event, path, details) => {
+    log('Raw event info:', event, path, details);
+  });
+ 
+// 'add', 'addDir' and 'change' events also receive stat() results as second 
+// argument when available: http://nodejs.org/api/fs.html#fs_class_fs_stats 
+watcher.on('change', (path, stats) => {
+  if (stats) console.log(`File ${path} changed size to ${stats.size}`);
+});
 
 var client = new elasticsearch.Client({
 	host: 'localhost:9200',
@@ -78,7 +81,6 @@ function extractData(file) {
 				console.log(momentDate);
 				searchObj.createDate = momentDate.format("YYYY:MM:DD HH:mm:ss");
 			}
-
 
 			sendToElasticsearch(searchObj);
 		}

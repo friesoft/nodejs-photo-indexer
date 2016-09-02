@@ -4,6 +4,7 @@
   "description": "Node js sample to index photo metadata using the exiftool",
   "main": "app.js",
   "dependencies": {
+    "chokidar": "^1.6.0",
     "elasticsearch": "",
     "exif2": "0.0.1",
     "moment": "^2.14.1",
