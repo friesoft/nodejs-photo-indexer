@@ -42,10 +42,12 @@ function extractData(file) {
 	console.log("Extracting data");
 	exif(file, function(err, obj){
 		if(err) {
+			console.log("ERROR extracting");
 			console.log(err);
 			callback();
 		} else {
 			console.log("Creating the object");
+			console.log(obj);
 			var searchObj = {};
 			searchObj.name = obj["file name"];
 			searchObj.camera = obj["camera model name"];
